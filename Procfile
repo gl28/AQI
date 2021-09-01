@@ -1,1 +1,1 @@
-web: gunicorn aqi.wsgi --log-file -
+web: sh -c 'cd aqi && gunicorn aqi.wsgi --log-file -'
