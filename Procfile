@@ -1,1 +1,1 @@
-web: gunicorn aqi.aqi.wsgi
+web: gunicorn aqi.aqi.wsgi --log-file -
