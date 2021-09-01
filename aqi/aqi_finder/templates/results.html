@@ -1,0 +1,192 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row justify-content-center top-row">
+    <div class="col-8 text-center">
+        <h1>Find the Best Air Quality Near You</h1>
+    </div>
+</div>
+<div class="row justify-content-center">
+    <div class="col-5">
+        <p class="form-label">Enter your city</p>
+        <input id="autocomplete" type="text" value="{{place}}" class="form-control">
+    </div>
+    <div class="col-3">
+        <form action="" method="GET">
+            <input type="hidden" id="latitude" name="lat" value={{latitude}}>
+            <input type="hidden" id="longitude" name="long" value={{longitude}}>
+            <input type="hidden" id="place" name="place" value={{place}}>
+            <p class="form-label">
+                <label for="distance">Within how many miles?</label>
+            </p>
+            <input type="number" id="distance" name="dist" value="{{distance}}" class="form-control" style="width:100%">
+    </div>
+</div>
+<div class="row justify-content-center submit-row">
+    <div class="col-6 text-center">
+        <input type="submit" value="Get results" class="btn btn-primary">
+        </form>
+    </div>
+</div>
+    
+<div class="row justify-content-center">
+    <div class="col-6">
+        <div style="width:500px; height:500px; margin-left:auto; margin-right:auto;">
+            <div id="map"></div>
+        </div>
+    </div> 
+    </div>
+<div class="row justify-content-center results-row">
+        <div class="col-3 text-center">
+            <h3>Results</h3>
+            {% for measurement in measurements %}
+            <p>{{measurement.reporting_area}} - {{measurement.aqi_value}} ({{measurement.aqi_category}})</p>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+<script>
+
+    function init() {
+        initMap();
+        initAutoComplete();
+    }
+
+    let autocomplete;
+
+    function initAutoComplete() {
+        autocomplete = new google.maps.places.Autocomplete(
+            document.getElementById('autocomplete'),
+            {
+                types: ['(cities)'],
+                componentRestrictions: {'country': ['us']},
+                fields: ['place_id', 'geometry', 'name']
+            });
+        autocomplete.addListener('place_changed', onPlaceChanged);
+    }
+
+    function onPlaceChanged() {
+        var place = autocomplete.getPlace();
+
+        if (!place.geometry) {
+            // User did not select a prediction, so reset the input field
+            document.getElementById('autocomplete').placeholder = 
+            'Enter your city';
+        } else {
+            // Display details about the place
+            document.getElementById('latitude').value = place.geometry.location.lat();
+            document.getElementById('longitude').value = place.geometry.location.lng();
+            document.getElementById('place').value = place.name;
+        }
+    }
+
+    let map;
+
+    // user's location values
+    let latitude = {{latitude|safe}}
+    let longitude = {{longitude|safe}}
+
+    // create map
+    function initMap() {
+        map = new google.maps.Map(document.getElementById("map"), {
+            center: { lat: latitude, lng: longitude },
+            zoom: 12,
+        });
+
+        // initialize style variables for markers
+        let aqiValue;
+        let aqiColor;
+        let textColor;
+        
+        // initialize map bounds (to be extended by each marker)
+        let bounds = new google.maps.LatLngBounds();
+
+        // variable to track previously opened info window
+        let previousInfoWindow = false;
+
+        // loop through measurements
+        {% for measurement in measurements %}
+
+        aqiValue = {{measurement.aqi_value}};
+        textColor = '#ffffff';
+
+        // set colors based on AQI category
+        if (aqiValue < 50) {
+            aqiColor = '#00e400';
+            textColor = '#000000';
+        } else if (aqiValue < 101) {
+            aqiColor = '#ffff00';
+            textColor = '#000000';
+        } else if (aqiValue < 151) {
+            aqiColor = '#ff7e00';
+        } else if (aqiValue < 201) {
+            aqiColor = '#ff0000';
+        } else if (aqiValue < 301) {
+            aqiColor = '#8f3f97';
+        } else {
+            aqiColor = '#7e0023';
+        }
+
+        // coordinates of new marker
+        const coords{{measurement.id}} = {
+            lat: {{measurement.latitude}},
+            lng: {{measurement.longitude}}
+        }
+
+        // extend the bounds to fit this marker
+        bounds.extend(coords{{measurement.id}});
+
+        // popup text for marker
+        const info{{measurement.id}} = 
+            '<b>{{measurement.reporting_area}}</b><br>' +
+            '{{measurement.aqi_category}}';
+
+        // info window for marker
+        const infowindow{{measurement.id}} = new google.maps.InfoWindow({
+            content: info{{measurement.id}},
+        });
+
+        // create new marker
+        const marker{{measurement.id}} = new google.maps.Marker({
+            position: coords{{measurement.id}},
+            map: map,
+            icon: {
+            path: google.maps.SymbolPath.CIRCLE,
+            fillColor: aqiColor,
+            fillOpacity: 1,
+            strokeWeight: 1,
+            scale: 15
+            },
+            label: {
+                text: '{{measurement.aqi_value}}',
+                color: textColor,
+            }
+        });
+
+        // add click listener to marker to show info
+        marker{{measurement.id}}.addListener("click", () => {
+            
+            // close any info windows that are already open
+            if (previousInfoWindow) {
+                previousInfoWindow.close();
+            }
+
+            previousInfoWindow = infowindow{{measurement.id}};
+            
+            infowindow{{measurement.id}}.open({
+                anchor: marker{{measurement.id}},
+                map,
+                shouldFocus: false,
+            });
+        });
+
+        {% endfor %}
+
+        map.fitBounds(bounds);
+
+    }
+</script>
+<script async src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDLhxQ4TmAueJWHH92uuDtFfyyS9oi3u54&libraries=places&callback=init"></script>
+{% endblock %}
+{% block scripts %}
+{% endblock %}

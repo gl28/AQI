@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row justify-content-center top-row">
+    <div class="col-8 text-center">
+        <h1>Find the Best Air Quality Near You</h1>
+    </div>
+</div>
+<div class="row justify-content-center">
+    <div class="col-5">
+        <p class="form-label">Enter your city</p>
+        <input id="autocomplete" type="text" value="{{place}}" class="form-control">
+    </div>
+    <div class="col-3">
+        <form action="" method="GET">
+            <input type="hidden" id="latitude" name="lat" value={{latitude}}>
+            <input type="hidden" id="longitude" name="long" value={{longitude}}>
+            <input type="hidden" id="place" name="place" value={{place}}>
+            <p class="form-label">
+                <label for="distance">Within how many miles?</label>
+            </p>
+            <input type="number" id="distance" name="dist" value="35" class="form-control" style="width:100%">
+    </div>
+</div>
+<div class="row justify-content-center submit-row">
+    <div class="col-6 text-center">
+        <input type="submit" value="Get results" class="btn btn-primary">
+        </form>
+    </div>
+</div>
+<script>
+    let autocomplete;
+    function initAutoComplete() {
+        autocomplete = new google.maps.places.Autocomplete(
+            document.getElementById('autocomplete'),
+            {
+                types: ['(cities)'],
+                componentRestrictions: {'country': ['us']},
+                fields: ['place_id', 'geometry', 'name']
+            });
+        
+        autocomplete.addListener('place_changed', onPlaceChanged);
+    }
+
+    function onPlaceChanged() {
+        var place = autocomplete.getPlace();
+
+        if (!place.geometry) {
+            // User did not select a prediction, so reset the input field
+            document.getElementById('autocomplete').placeholder = 
+            'Enter your city';
+        } else {
+            // Display details about the place
+            document.getElementById('latitude').value = place.geometry.location.lat();
+            document.getElementById('longitude').value = place.geometry.location.lng();
+            document.getElementById('place').value = place.name;
+        }
+    }
+</script>
+<script async src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDLhxQ4TmAueJWHH92uuDtFfyyS9oi3u54&libraries=places&callback=initAutoComplete"></script>
+{% endblock %}
