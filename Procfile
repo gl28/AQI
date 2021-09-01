@@ -1,1 +1,1 @@
-web: gunicorn aqi.aqi.wsgi --log-file -
+web: gunicorn --pythonpath 'aqi/' aqi.wsgi
