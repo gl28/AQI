@@ -27,4 +27,4 @@ jobs:
         pip install -r requirements.txt
     - name: Run Tests
       run: |
-        cd .. && pwd && ls && python manage.py test aqi_finder.tests
+        pwd && ls && python manage.py test aqi_finder.tests
